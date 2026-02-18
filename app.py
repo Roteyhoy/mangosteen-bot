@@ -49,5 +49,3 @@ def reply_text(reply_token, text):
     }
     
     requests.post(url, headers=headers, json=data)
-@app.route("/callback", methods=['POST'])
-def callback():
