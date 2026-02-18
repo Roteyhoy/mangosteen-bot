@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-CHANNEL_ACCESS_TOKEN = "ใส่ Channel Access Token ตรงนี้"
+CHANNEL_ACCESS_TOKEN = "2009159015"
 
 @app.route("/")
 def home():
@@ -49,6 +49,5 @@ def reply_text(reply_token, text):
     }
     
     requests.post(url, headers=headers, json=data)
-    @app.route("/callback", methods=["POST"])
+@app.route("/callback", methods=['POST'])
 def callback():
-    return "OK"
