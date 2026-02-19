@@ -8,16 +8,17 @@ app = Flask(__name__)
 
 CHANNEL_ACCESS_TOKEN = os.environ.get("CHANNEL_ACCESS_TOKEN")
 
+
 @app.route("/")
 def home():
     return "Mangosteen AI Bot Running"
 
+
 @app.route("/callback", methods=["POST"])
 def callback():
     body = request.get_json()
-    
     events = body.get("events", [])
-    
+
     for event in events:
         if event["type"] == "message":
             reply_token = event["replyToken"]
@@ -51,17 +52,12 @@ def callback():
                 with open(image_path, "wb") as f:
                     f.write(response.content)
 
-                # วิเคราะห์ภาพ
                 result = analyze_image(image_path)
-
                 reply_text(reply_token, result)
 
     return "OK"
 
 
-# =====================
-# ฟังก์ชันวิเคราะห์ภาพ (Simulation NIR)
-# =====================
 # =====================
 # ฟังก์ชันวิเคราะห์ภาพ (Improved Version)
 # =====================
@@ -77,13 +73,13 @@ def analyze_image(path):
     # แปลงเป็น HSV เพื่อตัดพื้นหลัง
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    # กำหนดช่วงสีของมังคุด (ปรับได้ตามภาพจริง)
+    # ช่วงสีของมังคุด (ปรับได้ตามภาพจริง)
     lower = np.array([20, 40, 40])
     upper = np.array([160, 255, 255])
     mask = cv2.inRange(hsv, lower, upper)
 
-    # ทำความสะอาด mask เล็กน้อย
-    kernel = np.ones((5,5), np.uint8)
+    # ทำความสะอาด mask
+    kernel = np.ones((5, 5), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
     # เอาเฉพาะส่วนที่เป็นผล
@@ -113,7 +109,6 @@ def analyze_image(path):
 
     bruise_percent = (bruise_pixels / total_pixels) * 100
 
-    # แบ่งระดับผลลัพธ์
     if bruise_percent < 8:
         status = "ปกติ ไม่พบรอยช้ำ"
     elif bruise_percent < 18:
@@ -127,17 +122,19 @@ def analyze_image(path):
 พื้นที่รอยช้ำประมาณ: {bruise_percent:.2f}%
 สถานะ: {status}
 """
+
+
 # =====================
 # ฟังก์ชันตอบกลับ LINE
 # =====================
 def reply_text(reply_token, text):
     url = "https://api.line.me/v2/bot/message/reply"
-    
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
     }
-    
+
     data = {
         "replyToken": reply_token,
         "messages": [
@@ -147,5 +144,5 @@ def reply_text(reply_token, text):
             }
         ]
     }
-    
+
     requests.post(url, headers=headers, json=data)
