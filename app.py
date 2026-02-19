@@ -62,34 +62,71 @@ def callback():
 # =====================
 # ฟังก์ชันวิเคราะห์ภาพ (Simulation NIR)
 # =====================
+# =====================
+# ฟังก์ชันวิเคราะห์ภาพ (Improved Version)
+# =====================
 def analyze_image(path):
     img = cv2.imread(path)
 
     if img is None:
         return "ไม่สามารถอ่านภาพได้ กรุณาลองใหม่อีกครั้ง"
 
-    # แปลงเป็น grayscale (จำลองการวิเคราะห์ความเข้มแสง)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # ลดขนาดภาพให้ประมวลผลเร็วขึ้น
+    img = cv2.resize(img, (600, 600))
 
-    # เพิ่ม contrast เล็กน้อย
+    # แปลงเป็น HSV เพื่อตัดพื้นหลัง
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # กำหนดช่วงสีของมังคุด (ปรับได้ตามภาพจริง)
+    lower = np.array([20, 40, 40])
+    upper = np.array([160, 255, 255])
+    mask = cv2.inRange(hsv, lower, upper)
+
+    # ทำความสะอาด mask เล็กน้อย
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    # เอาเฉพาะส่วนที่เป็นผล
+    fruit = cv2.bitwise_and(img, img, mask=mask)
+
+    # แปลงเป็น grayscale
+    gray = cv2.cvtColor(fruit, cv2.COLOR_BGR2GRAY)
+
+    # เพิ่ม contrast
     gray = cv2.equalizeHist(gray)
 
-    mean_intensity = np.mean(gray)
+    # ใช้ adaptive threshold หา area มืด
+    thresh = cv2.adaptiveThreshold(
+        gray,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        21,
+        5
+    )
 
-    # ตั้ง threshold จำลองการตรวจรอยช้ำ
-    if mean_intensity < 95:
-        status = "ตรวจพบแนวโน้มรอยช้ำ"
+    total_pixels = cv2.countNonZero(mask)
+    bruise_pixels = cv2.countNonZero(thresh)
+
+    if total_pixels == 0:
+        return "ไม่สามารถตรวจจับผลมังคุดได้ กรุณาถ่ายภาพให้ชัดขึ้น"
+
+    bruise_percent = (bruise_pixels / total_pixels) * 100
+
+    # แบ่งระดับผลลัพธ์
+    if bruise_percent < 8:
+        status = "ปกติ ไม่พบรอยช้ำ"
+    elif bruise_percent < 18:
+        status = "อาจมีรอยช้ำเล็กน้อย"
     else:
-        status = "ไม่พบรอยช้ำที่ชัดเจน"
+        status = "พบแนวโน้มรอยช้ำชัดเจน"
 
     return f"""
-ผลการวิเคราะห์มังคุด (Near-Infrared Simulation)
+ผลการวิเคราะห์มังคุด (Improved Analysis)
 
-ค่าความเข้มเฉลี่ย: {round(mean_intensity, 2)}
+พื้นที่รอยช้ำประมาณ: {bruise_percent:.2f}%
 สถานะ: {status}
 """
-
-
 # =====================
 # ฟังก์ชันตอบกลับ LINE
 # =====================
