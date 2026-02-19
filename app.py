@@ -108,8 +108,8 @@ def is_mangosteen(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # สีม่วงของมังคุด
-    lower_purple = np.array([110, 50, 30])
-    upper_purple = np.array([170, 255, 255])
+    lower_purple = np.array([100, 40, 20])
+    upper_purple = np.array([180, 255, 255])
 
     mask = cv2.inRange(hsv, lower_purple, upper_purple)
 
@@ -122,7 +122,7 @@ def is_mangosteen(img):
     purple_ratio = purple_pixels / total_pixels
 
     # เพิ่มความเข้มงวดเป็น 8%
-    return purple_ratio > 0.08
+    return purple_ratio > 0.05
 
 def analyze_image(path):
     img = cv2.imread(path)
