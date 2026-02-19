@@ -103,6 +103,27 @@ def callback():
 # =====================
 # ฟังก์ชันวิเคราะห์ภาพ (Improved Version)
 # =====================
+
+def is_mangosteen(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # สีม่วงของมังคุด
+    lower_purple = np.array([110, 50, 30])
+    upper_purple = np.array([170, 255, 255])
+
+    mask = cv2.inRange(hsv, lower_purple, upper_purple)
+
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+    purple_pixels = cv2.countNonZero(mask)
+    total_pixels = img.shape[0] * img.shape[1]
+
+    purple_ratio = purple_pixels / total_pixels
+
+    # เพิ่มความเข้มงวดเป็น 8%
+    return purple_ratio > 0.08
+
 def analyze_image(path):
     img = cv2.imread(path)
 
@@ -110,6 +131,10 @@ def analyze_image(path):
         return "ไม่สามารถอ่านภาพได้ กรุณาลองใหม่อีกครั้ง"
 
     img = cv2.resize(img, (600, 600))
+
+    # ✅ เช็คก่อนว่าเป็นมังคุดไหม
+    if not is_mangosteen(img):
+        return "❌ กรุณาส่งภาพ 'มังคุด' เท่านั้น"
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
